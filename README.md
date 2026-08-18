@@ -6,22 +6,22 @@
 式恕堂 版權所無
 
 [![Download](https://img.shields.io/github/v/release/rime/weasel)](https://github.com/rime/weasel/releases/latest)
-[![Build status](https://ci.appveyor.com/api/projects/status/github/rime/weasel?svg=true)](https://ci.appveyor.com/project/rime/weasel)
+[![Build status](https://github.com/rime/weasel/actions/workflows/commit-ci.yml/badge.svg)](https://github.com/rime/weasel/actions/workflows/commit-ci.yml)
 [![GitHub Tag](https://img.shields.io/github/tag/rime/weasel.svg)](https://github.com/rime/weasel)
 
 授權條款：GPLv3
 
-項目主葉：https://rime.im
+項目主頁：https://rime.im
 
 您可能還需要 RIME 用於其他操作系統的發行版：
 
-  * 【中州韻】用於 Linux + IBus 輸入法框架
+  * ibus-rime、fcitx5-rime 或 fcitx-rime 用於 Linux
   * 【鼠鬚管】用於 macOS （64位）
 
 安裝輸入法
 ----------
 
-本品適用於 Windows XP SP3, Windows 7 ~ Windows 10
+本品適用於 Windows 8.1 ~ Windows 11
 
 初次安裝時，安裝程序將顯示「安裝選項」對話框。
 
@@ -34,7 +34,7 @@
 
 選取輸入法指示器菜單裏的【中】字樣圖標，開始用小狼毫寫字。
 
-可通過快捷鍵 Ctrl+` 或 F4 呼出方案選單、切換輸入方式。
+可通過快捷鍵 <kbd>Ctrl+`</kbd> 或 <kbd>F4</kbd> 呼出方案選單、切換輸入方式。
 
 定製輸入法
 ----------
@@ -45,7 +45,7 @@
 
 修改詞庫、配置文件後，須「重新部署」方可生效。
 
-定製 Rime 的方法，請參考 Wiki [《定製指南》](https://github.com/rime/home/wiki/CustomizationGuide)
+定製 Rime 的方法，請參考 Wiki [《定製指南》](https://github.com/rime/home/wiki/CustomizationGuide)。如需定製 Weasel 獨有的樣式和行為，請參考本倉庫 [Wiki 頁面](https://github.com/rime/weasel/wiki)。
 
 致謝
 ----
@@ -72,6 +72,8 @@
   * [Xiangyan Sun](https://github.com/wishstudio)
   * [Prcuvu](https://github.com/Prcuvu)
   * [nameoverflow](https://github.com/nameoverflow)
+  * [fxliang](https://github.com/fxliang)
+  * [Azuk 443](https://github.com/determ1ne)
 
   查看更多 [代碼貢獻者](https://github.com/rime/weasel/graphs/contributors)
 
@@ -110,9 +112,6 @@ Rime 輸入法（不限於 Windows 平臺）功能、使用方法與配置相關
 聯繫方式
 --------
 
-加入聊天室，提出疑問，發表建議或感想
-[![Join the chat at https://gitter.im/rime/home](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/rime/home?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-其他技術交流請寄 Rime 開發者 <rimeime@gmail.com>
+技術交流，歡迎光臨 [Rime 代碼之家](https://github.com/rime/home)，或致信 Rime 開發者 <rimeime@gmail.com>
 
 謝謝！

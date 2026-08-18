@@ -3,11 +3,11 @@
   <PropertyGroup Label="UserMacros">
     <BOOST_ROOT>$BOOST_ROOT</BOOST_ROOT>
     <PLATFORM_TOOLSET>$PLATFORM_TOOLSET</PLATFORM_TOOLSET>
-    <PYTHON_HOME>C:\Python27</PYTHON_HOME>
-  </PropertyGroup>
-  <PropertyGroup>
-    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <_PropertySheetDisplayName>Weasel Project Properties</_PropertySheetDisplayName>
+    <VERSION_MAJOR>$VERSION_MAJOR</VERSION_MAJOR>
+    <VERSION_MINOR>$VERSION_MINOR</VERSION_MINOR>
+    <VERSION_PATCH>$VERSION_PATCH</VERSION_PATCH>
+    <PRODUCT_VERSION>$PRODUCT_VERSION</PRODUCT_VERSION>
+    <FILE_VERSION>$FILE_VERSION</FILE_VERSION>
   </PropertyGroup>
   <ItemGroup>
     <BuildMacro Include="BOOST_ROOT">
@@ -18,9 +18,14 @@
       <Value>$(PLATFORM_TOOLSET)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
-    <BuildMacro Include="PYTHON_HOME">
-      <Value>$(PYTHON_HOME)</Value>
-      <EnvironmentVariable>true</EnvironmentVariable>
-    </BuildMacro>
   </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>VERSION_MAJOR=$(VERSION_MAJOR);VERSION_MINOR=$(VERSION_MINOR);VERSION_PATCH=$(VERSION_PATCH);PRODUCT_VERSION=$(PRODUCT_VERSION);FILE_VERSION=$(FILE_VERSION);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8</AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>$(PreprocessorDefinitions);VERSION_MAJOR=$(VERSION_MAJOR);VERSION_MINOR=$(VERSION_MINOR);VERSION_PATCH=$(VERSION_PATCH);PRODUCT_VERSION=$(PRODUCT_VERSION);FILE_VERSION=$(FILE_VERSION);</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
 </Project>

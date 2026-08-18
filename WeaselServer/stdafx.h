@@ -6,11 +6,11 @@
 #pragma once
 
 // Change these values to use different versions
-#define WINVER		0x0500
-#define _WIN32_WINNT	0x0501
-#define _WIN32_IE	0x0501
+#define WINVER		0x0603
+#define _WIN32_WINNT	0x0603
+#define _WIN32_IE	0x0600
 #define _RICHEDIT_VER	0x0200
-
+#define NTDDI_VERSION  NTDDI_WINBLUE
 // This project was generated for VC++ 2005 Express and ATL 3.0 from Platform SDK.
 // Comment out this line to build the project with different versions of VC++ and ATL.
 //#define _WTL_SUPPORT_SDK_ATL3
@@ -21,7 +21,8 @@
   #pragma conform(forScope, off)
   #pragma comment(linker, "/NODEFAULTLIB:atlthunk.lib")
 #endif // _WTL_SUPPORT_SDK_ATL3
-
+// wtl10 require _RICHEDIT_VER > 0x0300, undef it first
+#undef _RICHEDIT_VER
 #include <atlbase.h>
 #include <atlwin.h>
 
@@ -48,6 +49,12 @@
 
 #include <VersionHelpers.hpp>
 
-typedef HRESULT (WINAPI *PRAR)(PCWSTR, DWORD);
-
 extern CAppModule _Module;
+
+#if defined _M_IX86
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif

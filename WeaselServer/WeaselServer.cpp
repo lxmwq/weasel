@@ -11,118 +11,120 @@
 #include <WeaselUtility.h>
 #include <winsparkle.h>
 #include <functional>
+#include <ShellScalingApi.h>
+#include <WinUser.h>
 #include <memory>
-
+#include <atlstr.h>
+#pragma comment(lib, "Shcore.lib")
 CAppModule _Module;
 
-typedef enum PROCESS_DPI_AWARENESS {
-	PROCESS_DPI_UNAWARE = 0,
-	PROCESS_SYSTEM_DPI_AWARE = 1,
-	PROCESS_PER_MONITOR_DPI_AWARE = 2
-} PROCESS_DPI_AWARENESS;
+int WINAPI _tWinMain(HINSTANCE hInstance,
+                     HINSTANCE /*hPrevInstance*/,
+                     LPTSTR lpstrCmdLine,
+                     int nCmdShow) {
+  LANGID langId = get_language_id();
+  SetThreadUILanguage(langId);
+  SetThreadLocale(langId);
 
-typedef enum MONITOR_DPI_TYPE {
-	MDT_EFFECTIVE_DPI = 0,
-	MDT_ANGULAR_DPI = 1,
-	MDT_RAW_DPI = 2,
-	MDT_DEFAULT = MDT_EFFECTIVE_DPI
-} MONITOR_DPI_TYPE;
+  if (!IsWindowsBlueOrLaterEx()) {
+    CString info, cap;
+    info.LoadStringW(IDS_STR_SYSTEM_VERSION_WARNING);
+    cap.LoadStringW(IDS_STR_SYSTEM_VERSION_WARNING_CAPTION);
+    MessageBoxExW(NULL, info, cap, MB_ICONERROR, langId);
+    return 0;
+  }
+  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
-int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int nCmdShow)
-{
-	InitVersion();
+  // 防止服务进程开启输入法
+  ImmDisableIME(-1);
 
-	// Set DPI awareness (Windows 8.1+)
-	if (IsWindows8Point1OrGreater())
-	{
-		using PSPDA = HRESULT (WINAPI *)(PROCESS_DPI_AWARENESS);
-		HMODULE shcore_module = ::LoadLibrary(_T("shcore.dll"));
-		if (shcore_module != NULL)
-		{
-			PSPDA SetProcessDpiAwareness = (PSPDA)::GetProcAddress(shcore_module, "SetProcessDpiAwareness");
-			SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-			::FreeLibrary(shcore_module);
-		}
-	}
+  WCHAR user_name[20] = {0};
+  DWORD size = _countof(user_name);
+  GetUserName(user_name, &size);
+  if (!_wcsicmp(user_name, L"SYSTEM")) {
+    return 1;
+  }
 
-	// 防止服务进程开启输入法
-	ImmDisableIME(-1);
+  HRESULT hRes = ::CoInitialize(NULL);
+  // If you are running on NT 4.0 or higher you can use the following call
+  // instead to make the EXE free threaded. This means that calls come in on a
+  // random RPC thread.
+  // HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+  ATLASSERT(SUCCEEDED(hRes));
 
-	WCHAR user_name[20] = {0};
-	DWORD size = _countof(user_name);
-	GetUserName(user_name, &size);
-	if (!_wcsicmp(user_name, L"SYSTEM"))
-	{
-		return 1;
-	}
+  // this resolves ATL window thunking problem when Microsoft Layer for Unicode
+  // (MSLU) is used
+  ::DefWindowProc(NULL, 0, 0, 0L);
 
-	HRESULT hRes = ::CoInitialize(NULL);
-	// If you are running on NT 4.0 or higher you can use the following call instead to 
-	// make the EXE free threaded. This means that calls come in on a random RPC thread.
-	//HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	ATLASSERT(SUCCEEDED(hRes));
+  AtlInitCommonControls(
+      ICC_BAR_CLASSES);  // add flags to support other controls
 
-	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
-	::DefWindowProc(NULL, 0, 0, 0L);
+  hRes = _Module.Init(NULL, hInstance);
+  ATLASSERT(SUCCEEDED(hRes));
 
-	AtlInitCommonControls(ICC_BAR_CLASSES);	// add flags to support other controls
+  if (!wcscmp(L"/userdir", lpstrCmdLine)) {
+    CreateDirectory(WeaselUserDataPath().c_str(), NULL);
+    WeaselServerApp::explore(WeaselUserDataPath());
+    return 0;
+  }
+  if (!wcscmp(L"/weaseldir", lpstrCmdLine)) {
+    WeaselServerApp::explore(WeaselServerApp::install_dir());
+    return 0;
+  }
+  if (!wcscmp(L"/ascii", lpstrCmdLine) || !wcscmp(L"/nascii", lpstrCmdLine)) {
+    weasel::Client client;
+    bool ascii = !wcscmp(L"/ascii", lpstrCmdLine);
+    if (client.Connect())  // try to connect to running server
+    {
+      if (ascii)
+        client.TrayCommand(ID_WEASELTRAY_ENABLE_ASCII);
+      else
+        client.TrayCommand(ID_WEASELTRAY_DISABLE_ASCII);
+    }
+    return 0;
+  }
 
-	hRes = _Module.Init(NULL, hInstance);
-	ATLASSERT(SUCCEEDED(hRes));
+  // command line option /q stops the running server
+  bool quit = !wcscmp(L"/q", lpstrCmdLine) || !wcscmp(L"/quit", lpstrCmdLine);
+  // restart if already running
+  {
+    weasel::Client client;
+    if (client.Connect())  // try to connect to running server
+    {
+      client.ShutdownServer();
+      if (quit)
+        return 0;
+      int retry = 0;
+      while (client.Connect() && retry < 10) {
+        client.ShutdownServer();
+        retry++;
+        Sleep(50);
+      }
+      if (retry >= 10)
+        return 0;
+    } else if (quit)
+      return 0;
+  }
 
-	if (!wcscmp(L"/userdir", lpstrCmdLine))
-	{
-		CreateDirectory(WeaselUserDataPath().c_str(), NULL);
-		WeaselServerApp::explore(WeaselUserDataPath());
-		return 0;
-	}
-	if (!wcscmp(L"/weaseldir", lpstrCmdLine))
-	{
-		WeaselServerApp::explore(WeaselServerApp::install_dir());
-		return 0;
-	}
+  bool check_updates = !wcscmp(L"/update", lpstrCmdLine);
+  if (check_updates) {
+    WeaselServerApp::check_update();
+  }
 
-	// command line option /q stops the running server
-	bool quit = !wcscmp(L"/q", lpstrCmdLine) || !wcscmp(L"/quit", lpstrCmdLine);
-	// restart if already running
-	{
-		weasel::Client client;
-		if (client.Connect())  // try to connect to running server
-		{
-			client.ShutdownServer();
-		}
-		if (quit)
-			return 0;
-	}
+  CreateDirectory(WeaselUserDataPath().c_str(), NULL);
 
-	bool check_updates = !wcscmp(L"/update", lpstrCmdLine);
-	if (check_updates)
-	{
-		WeaselServerApp::check_update();
-	}
+  int nRet = 0;
+  try {
+    WeaselServerApp app;
+    RegisterApplicationRestart(NULL, 0);
+    nRet = app.Run();
+  } catch (...) {
+    // bad luck...
+    nRet = -1;
+  }
 
-	CreateDirectory(WeaselUserDataPath().c_str(), NULL);
+  _Module.Term();
+  ::CoUninitialize();
 
-	int nRet = 0;
-
-	try
-	{
-		WeaselServerApp app;
-		if (IsWindowsVistaOrGreater())
-		{
-			PRAR RegisterApplicationRestart = (PRAR)::GetProcAddress(::GetModuleHandle(_T("kernel32.dll")), "RegisterApplicationRestart");
-			RegisterApplicationRestart(NULL, 0);
-		}
-		nRet = app.Run();
-	}
-	catch (...)
-	{
-		// bad luck...
-		nRet = -1;
-	}
-
-	_Module.Term();
-	::CoUninitialize();
-
-	return nRet;
+  return nRet;
 }
